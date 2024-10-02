@@ -30,6 +30,7 @@ class _PriceScreenState extends State<PriceScreen> {
         setState(() {
           selectedCurrency = value!;
         });
+        print(selectedCurrency);
       },
     );
   }
@@ -49,6 +50,27 @@ class _PriceScreenState extends State<PriceScreen> {
       },
       children: pickerItems,
     );
+  }
+
+  String bitcoinValueInUSD = '';
+  // This method gets the data that has been pulled from thr API by the coin_data class
+  Future getData() async {
+    try {
+      double gottenCoinValue = await CoinData().getCoinData();
+      // setState rebuilds the screen with the updated value of the currency
+      setState(() {
+        // The .toStringAsFixed(0) prints the double as a whole number without the long fraction
+        bitcoinValueInUSD = gottenCoinValue.toStringAsFixed(0);
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getData();
   }
 
   @override
@@ -71,12 +93,13 @@ class _PriceScreenState extends State<PriceScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10.0),
               ),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 15.0, horizontal: 28.0),
                 child: Text(
-                  '1 BTC = ? USD',
+                  '1 BTC = $bitcoinValueInUSD USD',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 20.0,
                     color: Colors.white,
                   ),

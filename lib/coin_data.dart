@@ -35,10 +35,10 @@ const List<String> cryptoList = [
 const baseCurrency = 'BTC';
 const quoteCurrency = 'USD';
 const coinAPIURL = 'https://rest.coinapi.io/v1/exchangerate';
-const apiKey = 'YOUR API KEY';
+const apiKey = 'YOUR-API-KEY';
 
 class CoinData {
-  //TODO: Create your getCoinData() method here.
+  // This method pulls the exchange rate data from an api
   Future getCoinData() async {
     final url =
         Uri.parse('$coinAPIURL/$baseCurrency/$quoteCurrency?apikey=$apiKey');
