@@ -11,7 +11,7 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
-  String selectedCurrency = 'USD';
+  String selectedCurrency = currenciesList[0];
 
   // This method generates androids DropDownButton
   DropdownButton<String> androidDropDown() {
@@ -29,8 +29,8 @@ class _PriceScreenState extends State<PriceScreen> {
       onChanged: (value) {
         setState(() {
           selectedCurrency = value!;
+          getData();
         });
-        print(selectedCurrency);
       },
     );
   }
@@ -46,21 +46,28 @@ class _PriceScreenState extends State<PriceScreen> {
     return CupertinoPicker(
       itemExtent: 32.0,
       onSelectedItemChanged: (selectedIndex) {
-        print(selectedIndex);
+        setState(() {
+          // Get the value (in this case the currency from the currenciesList) at the selectedIndex
+          selectedCurrency = currenciesList[selectedIndex];
+          getData();
+        });
       },
       children: pickerItems,
     );
   }
 
-  String bitcoinValueInUSD = '';
-  // This method gets the data that has been pulled from thr API by the coin_data class
-  Future getData() async {
+  Map<String, String> coinValues = {};
+  bool isWaiting = false;
+  // This method gets the data that has been pulled from the API by the coin_data class
+  void getData() async {
+    isWaiting = true;
     try {
-      double gottenCoinValue = await CoinData().getCoinData();
+      var data = await CoinData().getCoinData(selectedCurrency);
+      isWaiting = false;
       // setState rebuilds the screen with the updated value of the currency
       setState(() {
         // The .toStringAsFixed(0) prints the double as a whole number without the long fraction
-        bitcoinValueInUSD = gottenCoinValue.toStringAsFixed(0);
+        coinValues = data;
       });
     } catch (e) {
       print(e);
@@ -71,6 +78,23 @@ class _PriceScreenState extends State<PriceScreen> {
   void initState() {
     super.initState();
     getData();
+  }
+
+  Column makeCard() {
+    List<CryptoCard> cryptoCards = [];
+
+    for (String cryptoCurrency in cryptoList) {
+      cryptoCards.add(
+        CryptoCard(
+            cryptoName: cryptoCurrency,
+            cryptoValue: isWaiting ? '?' : (coinValues[cryptoCurrency] ?? '?'),
+            selectedCurrency: selectedCurrency),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: cryptoCards,
+    );
   }
 
   @override
@@ -87,25 +111,7 @@ class _PriceScreenState extends State<PriceScreen> {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlue,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = $bitcoinValueInUSD USD',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
+            child: makeCard(),
           ),
           Container(
             height: 150.0,
@@ -117,6 +123,42 @@ class _PriceScreenState extends State<PriceScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class CryptoCard extends StatelessWidget {
+  const CryptoCard({
+    super.key,
+    required this.cryptoName,
+    required this.cryptoValue,
+    required this.selectedCurrency,
+  });
+
+  final String cryptoName;
+  final String cryptoValue;
+  final String selectedCurrency;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.lightBlue,
+      elevation: 5.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
+        child: Text(
+          // Update the currency name depending on the selected currency
+          '1 $cryptoName = $cryptoValue $selectedCurrency',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 20.0,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
